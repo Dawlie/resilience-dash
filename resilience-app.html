@@ -2,72 +2,105 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resilience Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Resilience</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0d0b14; color: #f0e6ff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
-  .app { max-width: 420px; margin: 0 auto; padding: 24px 16px 100px; }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:#0d0b14;color:#f0e6ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;overscroll-behavior:none;}
+.app{max-width:420px;margin:0 auto;padding:20px 14px 90px;}
 
-  .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; text-align: center; }
-  .auth-logo { font-size: 52px; margin-bottom: 16px; }
-  .auth-title { font-size: 30px; font-weight: 900; background: linear-gradient(90deg, #ff6eb4, #b388ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
-  .auth-sub { color: #7a6a99; font-size: 14px; margin-bottom: 40px; line-height: 1.6; }
-  .auth-btn { background: linear-gradient(135deg, #e91e8c, #7c5cbf); border: none; border-radius: 16px; padding: 18px 32px; color: white; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; max-width: 320px; box-shadow: 0 0 30px #e91e8c44; letter-spacing: 0.05em; }
-  .auth-note { color: #7a6a99; font-size: 11px; margin-top: 14px; line-height: 1.5; }
+/* AUTH */
+.auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center;}
+.auth-logo{font-size:52px;margin-bottom:16px;}
+.auth-title{font-size:30px;font-weight:900;background:linear-gradient(90deg,#ff6eb4,#b388ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+.auth-sub{color:#7a6a99;font-size:14px;margin-bottom:40px;line-height:1.6;}
+.auth-btn{background:linear-gradient(135deg,#e91e8c,#7c5cbf);border:none;border-radius:16px;padding:18px 32px;color:white;font-size:15px;font-weight:700;cursor:pointer;width:100%;max-width:320px;box-shadow:0 0 30px #e91e8c44;letter-spacing:.05em;}
+.auth-note{color:#7a6a99;font-size:11px;margin-top:14px;line-height:1.5;}
 
-  .card { background: #13101f; border: 1px solid #1e1830; border-radius: 20px; padding: 18px; margin-bottom: 14px; }
-  .section-label { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
-  .slbar { width: 3px; height: 14px; border-radius: 2px; }
-  .sltext { color: #7a6a99; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; font-weight: 700; }
+/* LAYOUT */
+.card{background:#13101f;border:1px solid #1e1830;border-radius:20px;padding:18px;margin-bottom:14px;}
+.sl{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.slb{width:3px;height:14px;border-radius:2px;flex-shrink:0;}
+.slt{color:#7a6a99;font-size:10px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;}
+.header{margin-bottom:18px;}
+.header-date{color:#7a6a99;font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px;}
+.header-title{font-size:24px;font-weight:900;background:linear-gradient(90deg,#ff6eb4,#b388ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 
-  .header { margin-bottom: 20px; }
-  .header-date { color: #7a6a99; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px; }
-  .header-title { font-size: 24px; font-weight: 900; background: linear-gradient(90deg, #ff6eb4, #b388ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+/* TABS */
+.tabs{display:flex;gap:6px;margin-bottom:18px;overflow-x:auto;padding-bottom:2px;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{background:transparent;border:1px solid #1e1830;border-radius:20px;padding:6px 12px;color:#7a6a99;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.05em;white-space:nowrap;flex-shrink:0;}
+.tab.active{background:linear-gradient(135deg,#e91e8c22,#b388ff22);border-color:#e91e8c;color:#ff6eb4;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
 
-  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-  .tab { background: transparent; border: 1px solid #1e1830; border-radius: 20px; padding: 6px 14px; color: #7a6a99; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.05em; }
-  .tab.active { background: linear-gradient(135deg, #e91e8c22, #b388ff22); border-color: #e91e8c; color: #ff6eb4; }
+/* SCORE */
+.score-row{display:flex;align-items:center;justify-content:space-between;}
+.score-label{color:#7a6a99;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.score-num{font-size:56px;font-weight:900;line-height:1;background:linear-gradient(135deg,#e91e8c,#b388ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.score-status{color:#7a6a99;font-size:12px;margin-top:4px;}
 
-  .score-row { display: flex; align-items: center; justify-content: space-between; }
-  .score-label { color: #7a6a99; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
-  .score-num { font-size: 56px; font-weight: 900; line-height: 1; background: linear-gradient(135deg, #e91e8c, #b388ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .score-status { color: #7a6a99; font-size: 12px; margin-top: 4px; }
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.mc{background:#13101f;border:1px solid #1e1830;border-radius:16px;padding:12px 6px;text-align:center;}
+.ml{color:#7a6a99;font-size:8px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+.mv{font-size:19px;font-weight:900;}
+.mu{color:#7a6a99;font-size:9px;margin-top:1px;}
 
-  .metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-  .metric-card { background: #13101f; border: 1px solid #1e1830; border-radius: 16px; padding: 12px 8px; text-align: center; }
-  .metric-label { color: #7a6a99; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
-  .metric-value { font-size: 20px; font-weight: 900; }
-  .metric-unit { color: #7a6a99; font-size: 9px; margin-top: 1px; }
-  .metric-change { margin-top: 5px; font-size: 9px; font-weight: 700; }
+/* MOOD SLIDER */
+.mood-card{background:linear-gradient(135deg,#1a0d2e,#0d0b14);border:1px solid #b388ff33;border-radius:24px;padding:20px;margin-bottom:14px;text-align:center;position:relative;overflow:hidden;}
+.mood-flower{font-size:56px;margin:10px auto;display:block;transition:filter .3s,transform .3s;}
+.mood-question{color:#f0e6ff;font-size:13px;font-weight:600;margin-bottom:16px;letter-spacing:.02em;}
+.mood-slider-wrap{position:relative;padding:0 4px;}
+.mood-labels{display:flex;justify-content:space-between;margin-bottom:6px;}
+.mood-label{color:#7a6a99;font-size:10px;}
+input[type=range].mood-range{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;outline:none;cursor:pointer;}
+input[type=range].mood-range::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ff6eb4,#b388ff);box-shadow:0 0 12px #e91e8c88;cursor:pointer;}
+.mood-value-label{color:#ff6eb4;font-size:11px;font-weight:700;margin-top:8px;}
+.mood-locked{color:#7a6a99;font-size:11px;margin-top:8px;}
 
-  .narc-card { background: linear-gradient(135deg, #ff2d7818, #b388ff12); border: 1px solid #e91e8c44; border-radius: 20px; padding: 18px 20px; margin-bottom: 14px; }
-  .narc-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #e91e8c; font-weight: 800; margin-bottom: 8px; }
-  .narc-quote { font-size: 13px; color: #ffb3d1; line-height: 1.6; font-style: italic; font-weight: 500; }
+/* PROGRESS */
+.progress-bg{background:#2d1f5e;border-radius:8px;height:10px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#e91e8c,#ff6eb4);box-shadow:0 0 10px #e91e8c88;transition:width .8s ease;}
 
-  .progress-bg { background: #2d1f5e; border-radius: 8px; height: 10px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, #e91e8c, #ff6eb4); box-shadow: 0 0 10px #e91e8c88; transition: width 0.8s ease; }
-  .progress-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+/* NARC */
+.narc-card{background:linear-gradient(135deg,#ff2d7818,#b388ff12);border:1px solid #e91e8c44;border-radius:20px;padding:16px 18px;margin-bottom:14px;}
+.narc-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#e91e8c;font-weight:800;margin-bottom:8px;}
+.narc-quote{font-size:13px;color:#ffb3d1;line-height:1.6;font-style:italic;font-weight:500;}
 
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+/* HEATMAP */
+.heatmap-grid{display:flex;flex-direction:column;gap:3px;}
+.heatmap-row{display:flex;gap:3px;}
+.heatmap-cell{flex:1;aspect-ratio:1;border-radius:4px;cursor:pointer;transition:transform .15s;}
+.heatmap-cell:active{transform:scale(1.3);}
+.heatmap-tooltip{position:fixed;background:#13101f;border:1px solid #e91e8c66;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;color:#ff6eb4;pointer-events:none;z-index:999;opacity:0;transition:opacity .2s;white-space:nowrap;box-shadow:0 0 20px #e91e8c44;}
 
-  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: #13101fee; backdrop-filter: blur(20px); border-top: 1px solid #1e1830; display: flex; justify-content: space-around; padding: 12px 0 20px; }
-  .nav-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+/* MINDSET ORB */
+.orb-container{display:flex;flex-direction:column;align-items:center;padding:20px 0 10px;}
+.orb{border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff6eb4,#e91e8c,#7c5cbf);box-shadow:0 0 60px #e91e8c66;transition:all .8s ease;margin-bottom:16px;}
+.orb-label{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+.orb-sub{color:#7a6a99;font-size:12px;text-align:center;line-height:1.5;max-width:280px;}
+.mindset-warning{background:linear-gradient(135deg,#ff2d7822,#ff6b3518);border:1px solid #ff2d7844;border-radius:16px;padding:14px 16px;margin-bottom:12px;}
+.mindset-clear{background:linear-gradient(135deg,#4ade8018,#00e5c818);border:1px solid #4ade8044;border-radius:16px;padding:14px 16px;margin-bottom:12px;}
+.mindset-title{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.mindset-text{font-size:13px;line-height:1.6;color:#f0e6ff;}
 
-  .sleep-donut-row { display: flex; align-items: center; gap: 16px; }
-  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+/* SLEEP */
+.sleep-line-container{position:relative;height:140px;margin-bottom:8px;}
+.sleep-scrubber{width:100%;-webkit-appearance:none;height:3px;border-radius:2px;background:linear-gradient(90deg,#7c5cbf,#ff6eb4,#b388ff);outline:none;cursor:pointer;margin-top:8px;}
+.sleep-scrubber::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#ff6eb4;box-shadow:0 0 8px #ff6eb488;}
+.sleep-info{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 12px;background:#1a1428;border-radius:10px;}
+.predator-badge{border-radius:12px;padding:6px 14px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:12px;}
 
-  .heatmap-grid { display: flex; flex-direction: column; gap: 4px; }
-  .heatmap-row { display: flex; gap: 4px; }
-  .heatmap-cell { flex: 1; aspect-ratio: 1; border-radius: 4px; }
-  .heatmap-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
-  .heatmap-swatch { width: 12px; height: 12px; border-radius: 3px; }
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#13101fee;backdrop-filter:blur(20px);border-top:1px solid #1e1830;display:flex;justify-content:space-around;padding:10px 0 18px;}
+.nav-btn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 8px;}
 
-  .spinner { width: 36px; height: 36px; border: 3px solid #1e1830; border-top-color: #e91e8c; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 40px auto; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* SPINNER */
+.loading-screen{display:none;text-align:center;padding-top:40vh;}
+.spinner{width:36px;height:36px;border:3px solid #1e1830;border-top-color:#e91e8c;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -77,29 +110,48 @@
   <div class="auth-title">Resilience</div>
   <div class="auth-sub">Your personal health intelligence.<br>Connect once. Own your data forever.</div>
   <button class="auth-btn" onclick="startAuth()">✦ Connect with Google Health</button>
-  <div class="auth-note">Read-only access · your data never leaves your device<br>Works on any device, any browser</div>
+  <div class="auth-note">Read-only · your data never leaves your device</div>
 </div>
 
-<div id="loading-screen" style="display:none; text-align:center; padding-top:40vh;">
+<div id="loading-screen" class="loading-screen">
   <div class="spinner"></div>
-  <div style="color:#7a6a99; font-size:13px; margin-top:16px;">Loading your data...</div>
+  <div style="color:#7a6a99;font-size:13px;margin-top:16px;">Loading your data...</div>
 </div>
 
 <div id="main-app" style="display:none;">
   <div class="app">
     <div class="header">
       <div class="header-date" id="header-date"></div>
-      <div class="header-title">Good morning 🌸</div>
+      <div class="header-title" id="greeting"></div>
     </div>
-
     <div class="tabs">
       <button class="tab active" onclick="switchTab('today',this)">☀️ Today</button>
       <button class="tab" onclick="switchTab('trends',this)">📈 Trends</button>
       <button class="tab" onclick="switchTab('sleep',this)">🌙 Sleep</button>
+      <button class="tab" onclick="switchTab('mindset',this)">🔮 Mindset</button>
     </div>
 
     <!-- TODAY -->
     <div id="tab-today" class="tab-content active">
+
+      <!-- MOOD SLIDER -->
+      <div class="mood-card" id="mood-card">
+        <div class="mood-question">How does your body feel right now?</div>
+        <div class="mood-flower" id="mood-flower">🌸</div>
+        <div id="mood-slider-section">
+          <div class="mood-slider-wrap">
+            <div class="mood-labels">
+              <span class="mood-label">Wrecked</span>
+              <span class="mood-label">Invincible</span>
+            </div>
+            <input type="range" class="mood-range" id="mood-range" min="1" max="10" value="5" oninput="onMoodChange(this.value)">
+          </div>
+          <div class="mood-value-label" id="mood-value-label">Neutral · 5/10</div>
+          <button onclick="lockMood()" style="margin-top:12px;background:linear-gradient(135deg,#e91e8c,#7c5cbf);border:none;border-radius:12px;padding:8px 24px;color:white;font-size:12px;font-weight:700;cursor:pointer;">Set for today ✦</button>
+        </div>
+        <div class="mood-locked" id="mood-locked" style="display:none;"></div>
+      </div>
+
       <div class="card">
         <div class="score-row">
           <div>
@@ -112,25 +164,22 @@
       </div>
 
       <div class="metrics-grid">
-        <div class="metric-card"><div class="metric-label">HRV</div><div class="metric-value" style="color:#e91e8c" id="m-hrv">—</div><div class="metric-unit">ms</div></div>
-        <div class="metric-card"><div class="metric-label">SpO2</div><div class="metric-value" style="color:#ff4d8d" id="m-spo2">—</div><div class="metric-unit">%</div></div>
-        <div class="metric-card"><div class="metric-label">BPM</div><div class="metric-value" style="color:#ff6eb4" id="m-bpm">—</div><div class="metric-unit">rhr</div></div>
-        <div class="metric-card"><div class="metric-label">Sleep</div><div class="metric-value" style="color:#b388ff" id="m-sleep">—</div><div class="metric-unit">hrs</div></div>
+        <div class="mc"><div class="ml">HRV</div><div class="mv" style="color:#e91e8c" id="m-hrv">—</div><div class="mu">ms</div></div>
+        <div class="mc"><div class="ml">SpO2</div><div class="mv" style="color:#ff4d8d" id="m-spo2">—</div><div class="mu">%</div></div>
+        <div class="mc"><div class="ml">BPM</div><div class="mv" style="color:#ff6eb4" id="m-bpm">—</div><div class="mu">rhr</div></div>
+        <div class="mc"><div class="ml">Sleep</div><div class="mv" style="color:#b388ff" id="m-sleep">—</div><div class="mu">hrs</div></div>
       </div>
 
-      <div class="narc-card">
-        <div class="narc-label">💉 Narcissism Injection</div>
-        <div class="narc-quote" id="narc-1"></div>
-      </div>
+      <div class="narc-card"><div class="narc-label">💉 Narcissism Injection</div><div class="narc-quote" id="narc-1"></div></div>
 
       <div class="card">
-        <div class="section-label"><div class="slbar" style="background:#ff6eb4"></div><div class="sltext">Steps · Resilience Boost</div></div>
+        <div class="sl"><div class="slb" style="background:#ff6eb4"></div><div class="slt">Steps · Resilience Boost</div></div>
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;">
           <div><span style="font-size:30px;font-weight:900;color:#ff6eb4" id="steps-num">—</span><span style="color:#7a6a99;font-size:12px;margin-left:6px;">/ 5,000</span></div>
           <div style="font-size:11px;color:#ff6b35;font-weight:700;" id="steps-rem"></div>
         </div>
         <div class="progress-bg"><div class="progress-fill" id="steps-bar" style="width:0%"></div></div>
-        <div class="progress-labels">
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
           <span style="color:#7a6a99;font-size:9px;">0</span>
           <span style="color:#e91e8c;font-size:9px;font-weight:700;">5k resilience threshold ✦</span>
           <span style="color:#7a6a99;font-size:9px;">10k</span>
@@ -138,16 +187,16 @@
       </div>
 
       <div class="card">
-        <div class="section-label"><div class="slbar" style="background:#ff2d78"></div><div class="sltext">Active Heart Rate · Today</div></div>
+        <div class="sl"><div class="slb" style="background:#ff2d78"></div><div class="slt">Heart Rate · Today</div></div>
         <div style="position:relative;height:100px;"><canvas id="active-hr-chart"></canvas></div>
       </div>
 
       <div class="card">
-        <div class="section-label"><div class="slbar" style="background:#e91e8c"></div><div class="sltext">Resilience Radar · vs Baseline</div></div>
+        <div class="sl"><div class="slb" style="background:#e91e8c"></div><div class="slt">Resilience Radar</div></div>
         <div style="position:relative;height:220px;"><canvas id="radar-chart"></canvas></div>
-        <div style="display:flex;gap:20px;justify-content:center;margin-top:8px;">
-          <div style="display:flex;align-items:center;gap:6px;"><div style="width:16px;height:2px;background:#e91e8c;"></div><span style="color:#7a6a99;font-size:9px;">this week</span></div>
-          <div style="display:flex;align-items:center;gap:6px;"><div style="width:16px;height:2px;background:#7c5cbf;"></div><span style="color:#7a6a99;font-size:9px;">baseline</span></div>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:5px;"><div style="width:14px;height:2px;background:#e91e8c;"></div><span style="color:#7a6a99;font-size:9px;">this week</span></div>
+          <div style="display:flex;align-items:center;gap:5px;"><div style="width:14px;height:2px;background:#7c5cbf;"></div><span style="color:#7a6a99;font-size:9px;">baseline</span></div>
         </div>
       </div>
     </div>
@@ -155,26 +204,27 @@
     <!-- TRENDS -->
     <div id="tab-trends" class="tab-content">
       <div class="card">
-        <div class="section-label"><div class="slbar" style="background:#ff2d78"></div><div class="sltext">90 Days · Every Day Counts</div></div>
+        <div class="sl"><div class="slb" style="background:#ff2d78"></div><div class="slt">90 Days · Every Day Counts</div></div>
         <div class="heatmap-grid" id="heatmap-grid"></div>
-        <div class="heatmap-legend">
-          <span style="color:#7a6a99;font-size:9px;">less</span>
-          <div class="heatmap-swatch" style="background:#1e1830"></div>
-          <div class="heatmap-swatch" style="background:#6b1e4a"></div>
-          <div class="heatmap-swatch" style="background:#a02060"></div>
-          <div class="heatmap-swatch" style="background:#d4357a"></div>
-          <div class="heatmap-swatch" style="background:#ff2d78"></div>
-          <div class="heatmap-swatch" style="background:#ff6eb4"></div>
-          <span style="color:#7a6a99;font-size:9px;">more</span>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:10px;">
+          <span style="color:#7a6a99;font-size:9px;">Victim</span>
+          <div style="width:11px;height:11px;border-radius:3px;background:#1e1830;"></div>
+          <div style="width:11px;height:11px;border-radius:3px;background:#4a1030;"></div>
+          <div style="width:11px;height:11px;border-radius:3px;background:#8b1a5a;"></div>
+          <div style="width:11px;height:11px;border-radius:3px;background:#c4267a;"></div>
+          <div style="width:11px;height:11px;border-radius:3px;background:#e91e8c;"></div>
+          <div style="width:11px;height:11px;border-radius:3px;background:#ff6eb4;box-shadow:0 0 6px #ff6eb488;"></div>
+          <span style="color:#7a6a99;font-size:9px;">Reckoner</span>
         </div>
+        <div style="margin-top:8px;padding:8px 12px;background:#1a1428;border-radius:10px;font-size:11px;color:#ff6eb4;font-weight:600;" id="heatmap-tap-hint">✦ Tap a cell to see your tier</div>
       </div>
       <div class="narc-card"><div class="narc-label">💉 Narcissism Injection</div><div class="narc-quote" id="narc-2"></div></div>
       <div class="card">
-        <div class="section-label"><div class="slbar" style="background:#ff6eb4"></div><div class="sltext">HRV · 7 Days</div></div>
+        <div class="sl"><div class="slb" style="background:#ff6eb4"></div><div class="slt">HRV · 7 Days</div></div>
         <div style="position:relative;height:120px;"><canvas id="hrv-chart"></canvas></div>
       </div>
       <div class="card">
-        <div class="section-label"><div class="slbar" style="background:#b388ff"></div><div class="sltext">Resting BPM · 7 Days</div></div>
+        <div class="sl"><div class="slb" style="background:#b388ff"></div><div class="slt">Resting BPM · 7 Days</div></div>
         <div style="position:relative;height:120px;"><canvas id="bpm-chart"></canvas></div>
       </div>
     </div>
@@ -190,49 +240,88 @@
           </div>
           <canvas id="sleep-ring" width="90" height="90"></canvas>
         </div>
+        <div class="predator-badge" id="predator-badge">calculating...</div>
       </div>
+
       <div class="card">
-        <div class="section-label"><div class="slbar" style="background:#b388ff"></div><div class="sltext">Sleep Stages</div></div>
-        <div class="sleep-donut-row">
-          <div style="width:160px;height:160px;flex-shrink:0;position:relative;"><canvas id="sleep-donut"></canvas></div>
+        <div class="sl"><div class="slb" style="background:#b388ff"></div><div class="slt">Sleep Stages</div></div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="width:150px;height:150px;flex-shrink:0;"><canvas id="sleep-donut"></canvas></div>
           <div id="sleep-legend"></div>
         </div>
       </div>
-      <div class="narc-card"><div class="narc-label">💉 Narcissism Injection</div><div class="narc-quote" id="narc-3"></div></div>
+
       <div class="card">
-        <div class="section-label"><div class="slbar" style="background:#b388ff"></div><div class="sltext">Stage Timeline</div></div>
-        <div style="position:relative;height:100px;"><canvas id="sleep-timeline"></canvas></div>
+        <div class="sl"><div class="slb" style="background:#b388ff"></div><div class="slt">HR Through Sleep · Scrub to explore</div></div>
+        <div class="sleep-line-container"><canvas id="sleep-hr-line"></canvas></div>
+        <input type="range" class="sleep-scrubber" id="sleep-scrubber" min="0" max="100" value="0" oninput="scrubSleep(this.value)">
+        <div class="sleep-info">
+          <div>
+            <div style="color:#7a6a99;font-size:9px;text-transform:uppercase;letter-spacing:.1em;">Stage</div>
+            <div style="font-size:14px;font-weight:800;color:#b388ff;" id="scrub-stage">—</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:#7a6a99;font-size:9px;text-transform:uppercase;letter-spacing:.1em;">Heart Rate</div>
+            <div style="font-size:14px;font-weight:800;color:#ff6eb4;" id="scrub-hr">— bpm</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="narc-card"><div class="narc-label">💉 Narcissism Injection</div><div class="narc-quote" id="narc-3"></div></div>
+    </div>
+
+    <!-- MINDSET -->
+    <div id="tab-mindset" class="tab-content">
+      <div class="card" style="text-align:center;padding:24px 18px;">
+        <div style="color:#7a6a99;font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;">Today's Power State</div>
+        <div class="orb-container">
+          <div class="orb" id="mindset-orb" style="width:120px;height:120px;"></div>
+          <div class="orb-label" id="orb-label">—</div>
+          <div class="orb-sub" id="orb-sub">Loading your resilience data...</div>
+        </div>
+      </div>
+
+      <div id="mindset-warnings"></div>
+
+      <div class="narc-card"><div class="narc-label">💉 Narcissism Injection</div><div class="narc-quote" id="narc-4"></div></div>
+
+      <div class="card">
+        <div class="sl"><div class="slb" style="background:#b388ff"></div><div class="slt">Today's Protocol</div></div>
+        <div id="mindset-protocol" style="font-size:13px;color:#f0e6ff;line-height:1.8;"></div>
       </div>
     </div>
   </div>
 
   <div class="bottom-nav">
     <button class="nav-btn" onclick="switchTab('today',null,true)">
-      <span style="font-size:20px;">☀️</span>
-      <span style="font-size:10px;font-weight:700;" id="nav-today" class="nav-lbl active-lbl">Today</span>
+      <span style="font-size:18px;">☀️</span><span style="font-size:9px;font-weight:700;" id="nav-today" style="color:#ff6eb4;">Today</span>
     </button>
     <button class="nav-btn" onclick="switchTab('trends',null,true)">
-      <span style="font-size:20px;">📈</span>
-      <span style="font-size:10px;font-weight:700;" id="nav-trends" class="nav-lbl">Trends</span>
+      <span style="font-size:18px;">📈</span><span style="font-size:9px;font-weight:700;color:#7a6a99;" id="nav-trends">Trends</span>
     </button>
     <button class="nav-btn" onclick="switchTab('sleep',null,true)">
-      <span style="font-size:20px;">🌙</span>
-      <span style="font-size:10px;font-weight:700;" id="nav-sleep" class="nav-lbl">Sleep</span>
+      <span style="font-size:18px;">🌙</span><span style="font-size:9px;font-weight:700;color:#7a6a99;" id="nav-sleep">Sleep</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('mindset',null,true)">
+      <span style="font-size:18px;">🔮</span><span style="font-size:9px;font-weight:700;color:#7a6a99;" id="nav-mindset">Mindset</span>
     </button>
   </div>
 </div>
 
+<!-- HEATMAP TOOLTIP -->
+<div class="heatmap-tooltip" id="heatmap-tooltip"></div>
+
 <script>
-const CLIENT_ID = '1013479427141-4fqd7nmca003d3gl38epit88u35dq4l8.apps.googleusercontent.com';
-const REDIRECT_URI = 'https://dawlie.github.io/resilience-dash/resilience-app.html';
-const SCOPES = [
+const CLIENT_ID='1013479427141-4fqd7nmca003d3gl38epit88u35dq4l8.apps.googleusercontent.com';
+const REDIRECT_URI='https://dawlie.github.io/resilience-dash/resilience-app.html';
+const SCOPES=[
   'https://www.googleapis.com/auth/fitness.heart_rate.read',
   'https://www.googleapis.com/auth/fitness.sleep.read',
   'https://www.googleapis.com/auth/fitness.activity.read',
   'https://www.googleapis.com/auth/fitness.oxygen_saturation.read',
 ].join(' ');
 
-const QUOTES = [
+const QUOTES=[
   "Your body is a precision instrument. Treat it like the weapon it is. 🗡️",
   "Every data point is evidence you're still winning. Don't waste the intel. 💅",
   "You don't recover for anyone else. You recover to be more dangerous. 🩷",
@@ -241,341 +330,461 @@ const QUOTES = [
   "Rest is not surrender. Rest is reloading. 🔫",
   "The data doesn't lie. And neither does your power. 🌸",
   "Recovery is the most aggressive thing you can do. Do it on purpose. 🎯",
+  "Harry Styles doesn't pay your rent. Your nervous system does. 💸",
+  "You are not behind. You are building something that lasts. 🩷",
 ];
 
-// ── AUTH: read token from URL hash on page load ──────────────────────────────
-function getTokenFromHash() {
-  const hash = window.location.hash || window.location.search;
-  if (!hash) return null;
-  const params = new URLSearchParams(hash.replace('#','').replace('?',''));
-  return params.get('access_token');
+const TIERS=[
+  {name:'Victim',min:0,color:'#1e1830'},
+  {name:'Survivor',min:1,color:'#4a1030'},
+  {name:'Warrior',min:2,color:'#8b1a5a'},
+  {name:'Boar Slayer',min:3,color:'#c4267a'},
+  {name:'Resilience Demon',min:4,color:'#e91e8c'},
+  {name:'The Reckoner',min:5,color:'#ff6eb4'},
+];
+
+const MOOD_LABELS={1:'Wrecked',2:'Very low',3:'Low',4:'Below average',5:'Neutral',6:'Decent',7:'Good',8:'Strong',9:'Very strong',10:'Invincible'};
+const MOOD_FLOWERS={1:'🥀',2:'🥀',3:'🌷',4:'🌷',5:'🌸',6:'🌸',7:'🌺',8:'🌺',9:'💐',10:'💐'};
+
+let APP={score:0,deepMins:0,moodScore:5,moodLocked:false,sleepData:[],hrData:[]};
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function startAuth(){
+  window.location.href='https://accounts.google.com/o/oauth2/v2/auth'
+    +`?client_id=${encodeURIComponent(CLIENT_ID)}`
+    +`&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`
+    +`&response_type=token`
+    +`&scope=${encodeURIComponent(SCOPES)}`
+    +`&prompt=consent`;
 }
 
-function startAuth() {
-  const url = `https://accounts.google.com/o/oauth2/v2/auth`
-    + `?client_id=${encodeURIComponent(CLIENT_ID)}`
-    + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`
-    + `&response_type=token`
-    + `&scope=${encodeURIComponent(SCOPES)}`
-    + `&prompt=consent`;
-  window.location.href = url;
-}
+function init(){
+  // Check for mood lock today
+  const todayKey='mood_'+new Date().toDateString();
+  const saved=localStorage.getItem(todayKey);
+  if(saved){APP.moodScore=parseInt(saved);APP.moodLocked=true;}
 
-function init() {
-  // Check URL hash for token (returning from Google OAuth)
-  const token = getTokenFromHash();
-  if (token) {
-    // Clean the URL so token isn't visible
-    history.replaceState(null, '', window.location.pathname);
-    localStorage.setItem('health_token', token);
-    localStorage.setItem('health_token_ts', Date.now());
-    launchApp(token);
-    return;
+  const hash=window.location.hash;
+  if(hash&&hash.includes('access_token')){
+    const p=new URLSearchParams(hash.replace('#',''));
+    const token=p.get('access_token');
+    if(token){
+      history.replaceState(null,'',window.location.pathname);
+      localStorage.setItem('gh_token',token);
+      localStorage.setItem('gh_ts',Date.now());
+      launch(token);return;
+    }
   }
-  // Check stored token
-  const stored = localStorage.getItem('health_token');
-  const ts = parseInt(localStorage.getItem('health_token_ts') || '0');
-  if (stored && (Date.now() - ts) < 3500000) {
-    launchApp(stored);
-    return;
-  }
-  // Show auth screen
-  document.getElementById('auth-screen').style.display = 'flex';
+  const stored=localStorage.getItem('gh_token');
+  const ts=parseInt(localStorage.getItem('gh_ts')||'0');
+  if(stored&&(Date.now()-ts)<3500000){launch(stored);return;}
+  document.getElementById('auth-screen').style.display='flex';
 }
 
-function launchApp(token) {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('loading-screen').style.display = 'block';
-
-  const now = new Date();
-  document.getElementById('header-date').textContent =
-    now.toLocaleDateString('en-US', { weekday:'long', day:'numeric', month:'long' }).toUpperCase();
-
+function launch(token){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('loading-screen').style.display='block';
+  const now=new Date();
+  document.getElementById('header-date').textContent=
+    now.toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+  const hr=now.getHours();
+  document.getElementById('greeting').textContent=
+    hr<12?'Good morning 🌸':hr<17?'Hello, boss 👑':hr<21?'Good evening 🌸':'Rest up, boss 🌙';
   setQuotes();
   buildHeatmap();
-
-  loadData(token).then(() => {
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-  }).catch(e => {
+  setupMoodSlider();
+  fetchAll(token).then(()=>{
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('main-app').style.display='block';
+  }).catch(e=>{
     console.error(e);
     renderDemo();
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('main-app').style.display='block';
   });
 }
 
-// ── DATA ─────────────────────────────────────────────────────────────────────
-async function loadData(token) {
-  const h = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-  const now = Date.now();
+// ── MOOD ──────────────────────────────────────────────────────────────────────
+function setupMoodSlider(){
+  if(APP.moodLocked){
+    document.getElementById('mood-slider-section').style.display='none';
+    document.getElementById('mood-locked').style.display='block';
+    document.getElementById('mood-locked').textContent=`Today's physical feeling: ${MOOD_LABELS[APP.moodScore]} · ${APP.moodScore}/10 🔒`;
+    updateMoodFlower(APP.moodScore);
+  } else {
+    updateMoodFlower(5);
+  }
+  updateMoodSliderBg(5);
+}
 
-  const [stepsRes, hrRes, spo2Res, sleepRes] = await Promise.all([
-    aggregate(h, 'com.google.step_count.delta', now - 86400000, now, 86400000),
-    aggregate(h, 'com.google.heart_rate.bpm', now - 86400000, now, 3600000),
-    aggregate(h, 'com.google.oxygen_saturation', now - 86400000, now, 86400000),
-    fetchSleep(h, now),
+function onMoodChange(v){
+  document.getElementById('mood-value-label').textContent=`${MOOD_LABELS[v]} · ${v}/10`;
+  updateMoodFlower(v);
+  updateMoodSliderBg(v);
+}
+
+function updateMoodFlower(v){
+  const el=document.getElementById('mood-flower');
+  el.textContent=MOOD_FLOWERS[v];
+  const glow=v>=7?`drop-shadow(0 0 ${v*3}px #e91e8c)`:v<=3?'grayscale(0.5)':'none';
+  el.style.filter=glow;
+  el.style.transform=`scale(${0.8+v*0.06})`;
+}
+
+function updateMoodSliderBg(v){
+  const pct=((v-1)/9)*100;
+  const el=document.getElementById('mood-range');
+  if(el)el.style.background=`linear-gradient(90deg,#e91e8c ${pct}%,#2d1f5e ${pct}%)`;
+}
+
+function lockMood(){
+  const v=parseInt(document.getElementById('mood-range').value);
+  APP.moodScore=v;APP.moodLocked=true;
+  const todayKey='mood_'+new Date().toDateString();
+  localStorage.setItem(todayKey,v);
+  document.getElementById('mood-slider-section').style.display='none';
+  document.getElementById('mood-locked').style.display='block';
+  document.getElementById('mood-locked').textContent=`Today's physical feeling: ${MOOD_LABELS[v]} · ${v}/10 🔒`;
+  // Recalc score with mood
+  if(APP.score) renderScore(APP.score);
+}
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+async function gFit(token,dataType,startMs,endMs,bucketMs){
+  const body={aggregateBy:[{dataTypeName:dataType}],bucketByTime:{durationMillis:bucketMs},startTimeMillis:startMs,endTimeMillis:endMs};
+  const r=await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(`${dataType} ${r.status}`);
+  return r.json();
+}
+
+async function gSleep(token,nowMs){
+  const end=new Date(nowMs).toISOString();
+  const start=new Date(nowMs-7*86400000).toISOString();
+  const r=await fetch(`https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${start}&endTime=${end}&activityType=72`,{headers:{Authorization:`Bearer ${token}`}});
+  return r.json();
+}
+
+function extractPts(data,key){
+  if(!data?.bucket)return[];
+  const v=[];
+  data.bucket.forEach(b=>b.dataset?.forEach(ds=>ds.point?.forEach(p=>p.value?.forEach(vv=>{if(vv[key]!=null)v.push(vv[key]||0);}))));
+  return v;
+}
+
+function sumPts(data,key){return extractPts(data,key).reduce((a,b)=>a+b,0);}
+
+async function fetchAll(token){
+  const now=Date.now();
+  const [hr1,hr7,steps1,spo2,sleep]=await Promise.allSettled([
+    gFit(token,'com.google.heart_rate.bpm',now-86400000,now,3600000),
+    gFit(token,'com.google.heart_rate.bpm',now-7*86400000,now,86400000),
+    gFit(token,'com.google.step_count.delta',now-86400000,now,86400000),
+    gFit(token,'com.google.oxygen_saturation',now-86400000,now,86400000),
+    gSleep(token,now),
   ]);
 
-  const steps = sumBuckets(stepsRes, 'intVal');
-  const hrPoints = allPoints(hrRes, 'fpVal');
-  const spo2 = avgBuckets(spo2Res, 'fpVal');
-  const sleepMs = getSleepMs(sleepRes);
-  const sleepHrs = sleepMs ? sleepMs / 3600000 : null;
-  const restBPM = hrPoints.length ? Math.round(hrPoints.slice().sort((a,b)=>a-b)[Math.floor(hrPoints.length*0.1)]) : null;
+  // HR today
+  const hrToday=hr1.status==='fulfilled'?extractPts(hr1.value,'fpVal'):[];
+  const restBPM=hrToday.length?Math.round(hrToday.slice().sort((a,b)=>a-b)[Math.floor(hrToday.length*.1)]):null;
 
-  // Metrics
-  if (restBPM) document.getElementById('m-bpm').textContent = restBPM;
-  if (spo2) document.getElementById('m-spo2').textContent = Math.round(spo2);
-  if (sleepHrs) document.getElementById('m-sleep').textContent = sleepHrs.toFixed(1);
+  // HR week buckets for BPM trend
+  const hrWeekBuckets=hr7.status==='fulfilled'?hr7.value.bucket||[]:[];
+  const bpm7=hrWeekBuckets.map(b=>{
+    const pts=[];b.dataset?.forEach(ds=>ds.point?.forEach(p=>p.value?.forEach(v=>{if(v.fpVal)pts.push(v.fpVal);})));
+    return pts.length?Math.round(pts.slice().sort((a,b)=>a-b)[Math.floor(pts.length*.1)]):null;
+  }).filter(Boolean);
 
   // Steps
-  document.getElementById('steps-num').textContent = steps.toLocaleString();
-  const pct = Math.min(steps / 5000, 1);
-  document.getElementById('steps-bar').style.width = `${pct * 100}%`;
-  document.getElementById('steps-rem').textContent = steps >= 5000 ? 'Goal smashed 🔥' : `${(5000 - steps).toLocaleString()} to boost 🔥`;
+  const totalSteps=steps1.status==='fulfilled'?sumPts(steps1.value,'intVal'):0;
+
+  // SpO2
+  const spo2Pts=spo2.status==='fulfilled'?extractPts(spo2.value,'fpVal'):[];
+  const spo2Avg=spo2Pts.length?Math.round(spo2Pts.reduce((a,b)=>a+b,0)/spo2Pts.length):null;
+
+  // Sleep sessions
+  const sessions=sleep.status==='fulfilled'?(sleep.value.session||[]):[];
+  const lastSleep=sessions.length?sessions[sessions.length-1]:null;
+  const sleepMs=lastSleep?parseInt(lastSleep.endTimeMillis)-parseInt(lastSleep.startTimeMillis):null;
+  const sleepHrs=sleepMs?sleepMs/3600000:null;
+
+  // Render metrics
+  if(restBPM)document.getElementById('m-bpm').textContent=restBPM;
+  if(spo2Avg)document.getElementById('m-spo2').textContent=spo2Avg;
+  if(sleepHrs)document.getElementById('m-sleep').textContent=sleepHrs.toFixed(1);
+  document.getElementById('m-hrv').textContent='~43';
+
+  // Steps
+  document.getElementById('steps-num').textContent=totalSteps.toLocaleString();
+  document.getElementById('steps-bar').style.width=`${Math.min(totalSteps/5000,1)*100}%`;
+  document.getElementById('steps-rem').textContent=totalSteps>=5000?'Goal smashed 🔥':`${(5000-totalSteps).toLocaleString()} to boost 🔥`;
 
   // Score
-  const score = calcScore(restBPM, spo2, sleepHrs, steps);
-  document.getElementById('score-number').textContent = score;
-  document.getElementById('score-status').textContent = score >= 75 ? 'Strong · keep going ↑' : score >= 55 ? 'Good · trending up ↑' : 'Recovery day · rest up 🌸';
-  drawRing('score-ring', score, 120);
+  const score=calcScore(restBPM,spo2Avg,sleepHrs,totalSteps,APP.moodScore);
+  APP.score=score;
+  renderScore(score);
 
   // Sleep display
-  if (sleepHrs) {
-    const h2 = Math.floor(sleepHrs); const m = Math.round((sleepHrs - h2) * 60);
-    document.getElementById('sleep-dur').textContent = `${h2}h ${m}m`;
+  if(sleepHrs){
+    const h=Math.floor(sleepHrs),m=Math.round((sleepHrs-h)*60);
+    document.getElementById('sleep-dur').textContent=`${h}h ${m}m`;
+    if(lastSleep){
+      const s=new Date(parseInt(lastSleep.startTimeMillis)).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+      const e=new Date(parseInt(lastSleep.endTimeMillis)).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+      document.getElementById('sleep-times').textContent=`${s} – ${e}`;
+    }
   }
-  drawRing('sleep-ring', 62, 90);
+  drawRing('sleep-ring',62,90);
 
-  // HRV placeholder (Google Fit doesn't expose raw HRV directly)
-  document.getElementById('m-hrv').textContent = '~43';
+  // Demo deep sleep for predator badge (real stage data needs activity segments)
+  APP.deepMins=68;
+  renderPredatorBadge(APP.deepMins);
 
-  renderCharts(hrPoints);
+  renderCharts(hrToday,bpm7);
   renderSleep();
+  renderMindset(score);
 }
 
-async function aggregate(headers, dataType, startMs, endMs, bucketMs) {
-  const r = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
-    method: 'POST', headers,
-    body: JSON.stringify({
-      aggregateBy: [{ dataTypeName: dataType }],
-      bucketByTime: { durationMillis: bucketMs },
-      startTimeMillis: startMs,
-      endTimeMillis: endMs,
-    })
-  });
-  if (!r.ok) throw new Error(`API error ${r.status}`);
-  return r.json();
+function calcScore(bpm,spo2,sleep,steps,mood){
+  let s=40;
+  if(bpm)  s+=bpm<60?15:bpm<70?10:bpm<80?5:0;
+  if(spo2) s+=spo2>=97?12:spo2>=95?6:0;
+  if(sleep)s+=sleep>=7?12:sleep>=6?7:sleep>=5?3:0;
+  if(steps)s+=steps>=5000?8:steps>=3000?4:0;
+  if(mood) s+=Math.round((mood-1)*1.4);
+  return Math.min(Math.round(s),99);
 }
 
-async function fetchSleep(headers, nowMs) {
-  const end = new Date(nowMs).toISOString();
-  const start = new Date(nowMs - 7*86400000).toISOString();
-  const r = await fetch(
-    `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${start}&endTime=${end}&activityType=72`,
-    { headers }
-  );
-  return r.json();
+function renderScore(score){
+  APP.score=score;
+  document.getElementById('score-number').textContent=score;
+  document.getElementById('score-status').textContent=
+    score>=80?'Reckoner mode activated 🔥':score>=65?'Strong · keep going ↑':score>=50?'Good · trending up ↑':'Recovery day · rest up 🌸';
+  drawRing('score-ring',score,120);
 }
 
-function sumBuckets(data, key) {
-  if (!data?.bucket) return 0;
-  let t = 0;
-  data.bucket.forEach(b => b.dataset?.forEach(ds => ds.point?.forEach(p => p.value?.forEach(v => { t += v[key] || 0; }))));
-  return t;
-}
-
-function allPoints(data, key) {
-  if (!data?.bucket) return [];
-  const vals = [];
-  data.bucket.forEach(b => b.dataset?.forEach(ds => ds.point?.forEach(p => p.value?.forEach(v => { if (v[key]) vals.push(v[key]); }))));
-  return vals;
-}
-
-function avgBuckets(data, key) {
-  const pts = allPoints(data, key);
-  return pts.length ? pts.reduce((a,b) => a+b, 0) / pts.length : null;
-}
-
-function getSleepMs(data) {
-  if (!data?.session?.length) return null;
-  const s = data.session[data.session.length - 1];
-  return parseInt(s.endTimeMillis) - parseInt(s.startTimeMillis);
-}
-
-function calcScore(bpm, spo2, sleep, steps) {
-  let s = 50;
-  if (bpm) s += bpm < 60 ? 15 : bpm < 70 ? 10 : bpm < 80 ? 5 : 0;
-  if (spo2) s += spo2 >= 97 ? 15 : spo2 >= 95 ? 8 : 0;
-  if (sleep) s += sleep >= 7 ? 15 : sleep >= 6 ? 8 : sleep >= 5 ? 3 : 0;
-  if (steps) s += steps >= 5000 ? 10 : steps >= 3000 ? 5 : 0;
-  return Math.min(Math.round(s), 99);
-}
-
-// ── RING ─────────────────────────────────────────────────────────────────────
-function drawRing(id, score, size) {
-  const c = document.getElementById(id);
-  if (!c) return;
-  const ctx = c.getContext('2d');
-  const cx = size/2, cy = size/2, r = size * 0.38;
-  ctx.clearRect(0, 0, size, size);
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
-  ctx.strokeStyle = '#2d1f5e'; ctx.lineWidth = size*0.09; ctx.stroke();
-  const g = ctx.createLinearGradient(0,0,size,size);
-  g.addColorStop(0,'#ff2d78'); g.addColorStop(1,'#b388ff');
-  ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + (score/100)*Math.PI*2);
-  ctx.strokeStyle = g; ctx.lineWidth = size*0.09; ctx.lineCap = 'round'; ctx.stroke();
-  ctx.fillStyle = '#f0e6ff'; ctx.font = `bold ${size*0.18}px system-ui`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(score, cx, cy - size*0.05);
-  ctx.fillStyle = '#7a6a99'; ctx.font = `${size*0.09}px system-ui`;
-  ctx.fillText('score', cx, cy + size*0.13);
-}
-
-// ── CHARTS ───────────────────────────────────────────────────────────────────
-const baseOpts = {
-  responsive: true, maintainAspectRatio: false,
-  plugins: { legend: { display: false }, tooltip: { backgroundColor: '#13101f', borderColor: '#1e1830', borderWidth: 1, titleColor: '#f0e6ff', bodyColor: '#b388ff', padding: 10, cornerRadius: 10 }},
-  scales: {
-    x: { grid: { display: false }, ticks: { color: '#7a6a99', font: { size: 9 }}, border: { display: false }},
-    y: { grid: { color: '#1e183044' }, ticks: { color: '#7a6a99', font: { size: 9 }}, border: { display: false }}
+// ── PREDATOR BADGE ────────────────────────────────────────────────────────────
+function renderPredatorBadge(deepMins){
+  const el=document.getElementById('predator-badge');
+  if(deepMins>=50){
+    el.style.background='linear-gradient(135deg,#e91e8c,#7c5cbf)';
+    el.style.color='white';
+    el.textContent='⚔️ PREDATOR READY · Deep sleep target met';
+  } else {
+    el.style.background='linear-gradient(135deg,#ff6b3522,#ff2d7822)';
+    el.style.color='#ff6b35';
+    el.style.border='1px solid #ff6b3544';
+    el.textContent=`🌱 Building · ${deepMins}min deep sleep · need 50min for full predator mode`;
   }
+}
+
+// ── RING ──────────────────────────────────────────────────────────────────────
+function drawRing(id,score,size){
+  const c=document.getElementById(id);if(!c)return;
+  const ctx=c.getContext('2d');
+  const cx=size/2,cy=size/2,r=size*.38;
+  ctx.clearRect(0,0,size,size);
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='#2d1f5e';ctx.lineWidth=size*.09;ctx.stroke();
+  const g=ctx.createLinearGradient(0,0,size,size);
+  g.addColorStop(0,'#ff2d78');g.addColorStop(1,'#b388ff');
+  ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+(score/100)*Math.PI*2);
+  ctx.strokeStyle=g;ctx.lineWidth=size*.09;ctx.lineCap='round';ctx.stroke();
+  ctx.fillStyle='#f0e6ff';ctx.font=`bold ${size*.18}px system-ui`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(score,cx,cy-size*.05);
+  ctx.fillStyle='#7a6a99';ctx.font=`${size*.09}px system-ui`;
+  ctx.fillText('score',cx,cy+size*.13);
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────────────────
+const bO={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#13101f',borderColor:'#1e1830',borderWidth:1,titleColor:'#f0e6ff',bodyColor:'#b388ff',padding:10,cornerRadius:10}},
+  scales:{x:{grid:{display:false},ticks:{color:'#7a6a99',font:{size:9}},border:{display:false}},y:{grid:{color:'#1e183044'},ticks:{color:'#7a6a99',font:{size:9}},border:{display:false}}}
 };
+let CH={};
+function mk(id,type,data,opts){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id).getContext('2d'),{type,data,options:opts});}
+function gv(ctx,h,c1,c2){const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,c1);g.addColorStop(1,c2);return g;}
 
-let charts = {};
-function mkChart(id, type, data, opts) {
-  if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(document.getElementById(id).getContext('2d'), { type, data, options: opts });
-}
+function renderCharts(hrToday,bpm7){
+  // Active HR
+  const sampled=hrToday.length>8?hrToday.filter((_,i)=>i%Math.floor(hrToday.length/8)===0).slice(0,8):[58,72,95,88,110,78,125,65];
+  const hrCtx=document.getElementById('active-hr-chart').getContext('2d');
+  mk('active-hr-chart','line',{labels:['6am','8am','10am','12pm','2pm','4pm','6pm','8pm'].slice(0,sampled.length),datasets:[{data:sampled,borderColor:'#ff2d78',backgroundColor:gv(hrCtx,100,'#ff2d7866','#ff2d7802'),borderWidth:2.5,fill:true,tension:.4,pointBackgroundColor:'#ff6eb4',pointRadius:3}]},{...bO,scales:{...bO.scales,y:{...bO.scales.y,min:50,max:160}}});
 
-function gradV(ctx, h, c1, c2) {
-  const g = ctx.createLinearGradient(0,0,0,h);
-  g.addColorStop(0, c1); g.addColorStop(1, c2); return g;
-}
+  // BPM 7d
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const bpmData=bpm7.length>=5?bpm7.slice(-7):[62,65,68,63,61,59,57];
+  const bCtx=document.getElementById('bpm-chart').getContext('2d');
+  mk('bpm-chart','line',{labels:days.slice(0,bpmData.length),datasets:[{data:bpmData,borderColor:'#b388ff',backgroundColor:gv(bCtx,120,'#b388ff55','#b388ff02'),borderWidth:2.5,fill:true,tension:.4,pointBackgroundColor:'#b388ff',pointRadius:3}]},{...bO,scales:{...bO.scales,y:{...bO.scales.y,min:45,max:90}}});
 
-function renderCharts(hrPoints) {
-  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const demoHRV = [38,42,35,44,40,47,43];
-  const demoBPM = [62,65,68,63,61,59,57];
-
-  // Active HR today — sample real data or demo
-  const hrSampled = hrPoints.length >= 6
-    ? hrPoints.filter((_,i) => i % Math.floor(hrPoints.length/8) === 0).slice(0,8)
-    : [58,72,95,88,110,78,125,65];
-  const hrLabels = ['6am','8am','10am','12pm','2pm','4pm','6pm','8pm'].slice(0, hrSampled.length);
-  const hrCtx = document.getElementById('active-hr-chart').getContext('2d');
-  mkChart('active-hr-chart','line',{
-    labels: hrLabels,
-    datasets:[{ data: hrSampled, borderColor:'#ff2d78', backgroundColor: gradV(hrCtx,100,'#ff2d7866','#ff2d7802'), borderWidth:2.5, fill:true, tension:0.4, pointBackgroundColor:'#ff6eb4', pointRadius:3 }]
-  }, { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, min:50, max:140 }}});
-
-  // HRV
-  const hCtx = document.getElementById('hrv-chart').getContext('2d');
-  mkChart('hrv-chart','line',{ labels:days, datasets:[{ data:demoHRV, borderColor:'#e91e8c', backgroundColor:gradV(hCtx,120,'#e91e8c55','#e91e8c02'), borderWidth:2.5, fill:true, tension:0.4, pointBackgroundColor:'#ff6eb4', pointRadius:3 }]}, {...baseOpts, scales:{...baseOpts.scales, y:{...baseOpts.scales.y,min:30,max:55}}});
-
-  // BPM
-  const bCtx = document.getElementById('bpm-chart').getContext('2d');
-  mkChart('bpm-chart','line',{ labels:days, datasets:[{ data:demoBPM, borderColor:'#b388ff', backgroundColor:gradV(bCtx,120,'#b388ff55','#b388ff02'), borderWidth:2.5, fill:true, tension:0.4, pointBackgroundColor:'#b388ff', pointRadius:3 }]}, {...baseOpts, scales:{...baseOpts.scales, y:{...baseOpts.scales.y,min:50,max:75}}});
+  // HRV demo
+  const hCtx=document.getElementById('hrv-chart').getContext('2d');
+  mk('hrv-chart','line',{labels:days,datasets:[{data:[38,42,35,44,40,47,43],borderColor:'#e91e8c',backgroundColor:gv(hCtx,120,'#e91e8c55','#e91e8c02'),borderWidth:2.5,fill:true,tension:.4,pointBackgroundColor:'#ff6eb4',pointRadius:3}]},{...bO,scales:{...bO.scales,y:{...bO.scales.y,min:30,max:55}}});
 
   // Radar
-  mkChart('radar-chart','radar',{
-    labels:['HRV','Sleep','SpO2','Rest BPM','Steps','Recovery'],
+  mk('radar-chart','radar',{
+    labels:['HRV','Sleep','SpO2','Rest BPM','Steps','Mood'],
     datasets:[
-      { label:'baseline', data:[60,70,78,75,55,68], borderColor:'#7c5cbf', backgroundColor:'#7c5cbf14', borderWidth:1.5, borderDash:[4,4], pointRadius:2 },
-      { label:'this week', data:[72,65,85,80,60,70], borderColor:'#e91e8c', backgroundColor:'#e91e8c22', borderWidth:2.5, pointBackgroundColor:'#ff6eb4', pointRadius:3 }
+      {label:'baseline',data:[60,70,78,75,55,65],borderColor:'#7c5cbf',backgroundColor:'#7c5cbf14',borderWidth:1.5,borderDash:[4,4],pointRadius:2},
+      {label:'now',data:[72,65,85,80,60,APP.moodScore*8],borderColor:'#e91e8c',backgroundColor:'#e91e8c22',borderWidth:2.5,pointBackgroundColor:'#ff6eb4',pointRadius:3}
     ]
-  },{
-    responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#13101f',borderColor:'#1e1830',borderWidth:1,titleColor:'#f0e6ff',bodyColor:'#b388ff'}},
-    scales:{ r:{ grid:{color:'#1e1830'}, angleLines:{color:'#1e1830'}, ticks:{display:false}, pointLabels:{color:'#7a6a99',font:{size:9}}}}
-  });
+  },{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#13101f',borderColor:'#1e1830',borderWidth:1,titleColor:'#f0e6ff',bodyColor:'#b388ff'}},scales:{r:{grid:{color:'#1e1830'},angleLines:{color:'#1e1830'},ticks:{display:false},pointLabels:{color:'#7a6a99',font:{size:9}}}}});
 }
 
-function renderSleep() {
-  const stages = [
-    { name:'Deep', value:68, color:'#7c5cbf' },
-    { name:'REM', value:74, color:'#ff6eb4' },
-    { name:'Light', value:185, color:'#b388ff' },
-    { name:'Awake', value:7, color:'#ff6b35' },
-  ];
-  mkChart('sleep-donut','doughnut',{
-    datasets:[{ data:stages.map(s=>s.value), backgroundColor:stages.map(s=>s.color), borderWidth:0, hoverOffset:4 }]
-  },{
-    responsive:true, maintainAspectRatio:true, cutout:'60%',
-    plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#13101f', borderColor:'#1e1830', borderWidth:1, callbacks:{ label:(ctx)=>` ${stages[ctx.dataIndex].name}: ${ctx.parsed}m`}}}
-  });
+// ── SLEEP CHARTS ──────────────────────────────────────────────────────────────
+const SLEEP_STAGES_DATA=[
+  {stage:'Light',hr:62,t:'1:00'},{stage:'Light',hr:60,t:'1:30'},{stage:'Deep',hr:52,t:'2:00'},
+  {stage:'Deep',hr:49,t:'2:30'},{stage:'Deep',hr:51,t:'3:00'},{stage:'REM',hr:68,t:'3:30'},
+  {stage:'REM',hr:72,t:'4:00'},{stage:'Light',hr:63,t:'4:30'},{stage:'Deep',hr:53,t:'5:00'},
+  {stage:'Light',hr:61,t:'5:30'},{stage:'REM',hr:70,t:'6:00'},{stage:'Awake',hr:75,t:'6:30'},
+];
+const STAGE_COLORS={'Deep':'#7c5cbf','REM':'#ff6eb4','Light':'#b388ff','Awake':'#ff6b35'};
 
-  document.getElementById('sleep-legend').innerHTML = stages.map(s => {
-    const d = s.value >= 60 ? `${Math.floor(s.value/60)}h ${s.value%60}m` : `${s.value}m`;
-    return `<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div><div><div style="color:${s.color};font-size:10px;font-weight:700;">${s.name}</div><div style="font-size:12px;font-weight:800;">${d}</div></div></div>`;
+function renderSleep(){
+  const stages=[
+    {name:'Deep',value:APP.deepMins,color:'#7c5cbf'},
+    {name:'REM',value:74,color:'#ff6eb4'},
+    {name:'Light',value:185,color:'#b388ff'},
+    {name:'Awake',value:7,color:'#ff6b35'},
+  ];
+  mk('sleep-donut','doughnut',{datasets:[{data:stages.map(s=>s.value),backgroundColor:stages.map(s=>s.color),borderWidth:0,hoverOffset:4}]},{responsive:true,maintainAspectRatio:true,cutout:'60%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#13101f',borderColor:'#1e1830',borderWidth:1,callbacks:{label:ctx=>` ${stages[ctx.dataIndex].name}: ${Math.round(ctx.parsed)}m`}}}});
+  document.getElementById('sleep-legend').innerHTML=stages.map(s=>{
+    const d=s.value>=60?`${Math.floor(s.value/60)}h ${s.value%60}m`:`${s.value}m`;
+    return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><div style="width:10px;height:10px;border-radius:50%;background:${s.color};flex-shrink:0;"></div><div><div style="color:${s.color};font-size:10px;font-weight:700;">${s.name}</div><div style="font-size:12px;font-weight:800;">${d}</div></div></div>`;
   }).join('');
 
-  const tl = [
-    {t:'1am',d:40,l:30,r:0,a:0},{t:'2am',d:60,l:20,r:0,a:0},{t:'3am',d:30,l:40,r:20,a:0},
-    {t:'4am',d:0,l:30,r:55,a:5},{t:'5am',d:20,l:50,r:25,a:0},{t:'6am',d:10,l:60,r:30,a:5},{t:'7am',d:0,l:70,r:20,a:10}
-  ];
-  mkChart('sleep-timeline','bar',{
-    labels:tl.map(d=>d.t),
-    datasets:[
-      {label:'Deep',data:tl.map(d=>d.d),backgroundColor:'#7c5cbf',stack:'s'},
-      {label:'Light',data:tl.map(d=>d.l),backgroundColor:'#b388ff',stack:'s'},
-      {label:'REM',data:tl.map(d=>d.r),backgroundColor:'#ff6eb4',stack:'s'},
-      {label:'Awake',data:tl.map(d=>d.a),backgroundColor:'#ff6b35',stack:'s'},
-    ]
-  },{...baseOpts, scales:{x:{...baseOpts.scales.x,stacked:true},y:{...baseOpts.scales.y,stacked:true}},plugins:{...baseOpts.plugins,legend:{display:false}}});
+  // HR through sleep line
+  const labels=SLEEP_STAGES_DATA.map(d=>d.t);
+  const hrVals=SLEEP_STAGES_DATA.map(d=>d.hr);
+  const ptColors=SLEEP_STAGES_DATA.map(d=>STAGE_COLORS[d.stage]||'#b388ff');
+  const slCtx=document.getElementById('sleep-hr-line').getContext('2d');
+  mk('sleep-hr-line','line',{
+    labels,
+    datasets:[{
+      data:hrVals,
+      borderColor:'#b388ff',
+      backgroundColor:'#b388ff12',
+      borderWidth:2,fill:true,tension:.4,
+      pointBackgroundColor:ptColors,
+      pointRadius:5,pointHoverRadius:7,
+    }]
+  },{...bO,scales:{...bO.scales,y:{...bO.scales.y,min:40,max:90}},plugins:{...bO.plugins,tooltip:{callbacks:{label:ctx=>`HR: ${ctx.parsed.y} bpm · ${SLEEP_STAGES_DATA[ctx.dataIndex].stage}`}}}});
+
+  // Init scrubber
+  updateScrubber(0);
 }
 
-function renderDemo() {
-  document.getElementById('m-hrv').textContent='~43';
-  document.getElementById('m-spo2').textContent='97';
-  document.getElementById('m-bpm').textContent='57';
-  document.getElementById('m-sleep').textContent='6.8';
-  document.getElementById('score-number').textContent='73';
-  document.getElementById('score-status').textContent='Good · trending up ↑';
-  drawRing('score-ring',73,120);
-  document.getElementById('steps-num').textContent='3,820';
-  document.getElementById('steps-bar').style.width='76%';
-  document.getElementById('steps-rem').textContent='1,180 to boost 🔥';
-  document.getElementById('sleep-dur').textContent='6h 28m';
-  document.getElementById('sleep-times').textContent='1:38 am – 7:13 am';
-  drawRing('sleep-ring',62,90);
-  renderCharts([]);
-  renderSleep();
+function scrubSleep(val){
+  const idx=Math.round((val/100)*(SLEEP_STAGES_DATA.length-1));
+  updateScrubber(idx);
 }
 
-// ── UI ────────────────────────────────────────────────────────────────────────
-function setQuotes() {
-  const q = () => `"${QUOTES[Math.floor(Math.random()*QUOTES.length)]}"`;
-  document.getElementById('narc-1').textContent = q();
-  document.getElementById('narc-2').textContent = q();
-  document.getElementById('narc-3').textContent = q();
+function updateScrubber(idx){
+  const d=SLEEP_STAGES_DATA[idx];
+  document.getElementById('scrub-stage').textContent=d.stage;
+  document.getElementById('scrub-stage').style.color=STAGE_COLORS[d.stage]||'#b388ff';
+  document.getElementById('scrub-hr').textContent=`${d.hr} bpm`;
 }
 
-function buildHeatmap() {
-  const scale = ['#1e1830','#6b1e4a','#a02060','#d4357a','#ff2d78','#ff6eb4'];
-  const data = Array.from({length:91}, () => Math.floor(Math.random()*6));
-  const grid = document.getElementById('heatmap-grid');
-  grid.innerHTML = '';
-  for (let r=0;r<7;r++) {
-    const row = document.createElement('div'); row.className='heatmap-row';
-    for (let c=0;c<13;c++) {
-      const idx=r*13+c; const cell=document.createElement('div'); cell.className='heatmap-cell';
-      cell.style.background=scale[data[idx]];
-      if(data[idx]>=4) cell.style.boxShadow='0 0 6px #ff2d7866';
+// ── MINDSET ───────────────────────────────────────────────────────────────────
+function renderMindset(score){
+  // Orb size 60–180px based on score
+  const size=60+Math.round((score/99)*120);
+  const orb=document.getElementById('mindset-orb');
+  orb.style.width=size+'px';orb.style.height=size+'px';
+  const glow=score>=70?`0 0 ${size*.6}px #e91e8c88`:`0 0 ${size*.3}px #7c5cbf44`;
+  orb.style.boxShadow=glow;
+
+  let orbLabel,orbSub,warnings,protocol;
+
+  if(score>=80){
+    orbLabel='🔥 RECKONER MODE';orbSub='You are operating at peak capacity. Deploy your power deliberately.';
+    warnings=`<div class="mindset-clear"><div class="mindset-title" style="color:#4ade80;">✦ Green Light · Full Send</div><div class="mindset-text">Your resilience is stacked. Today is a building day — push the creative work, the hard emails, the uncomfortable conversations. The Predator doesn't wait for perfect conditions. She IS the condition. 💅</div></div>`;
+    protocol='✦ Deep work: 2+ hour uninterrupted blocks\n✦ Pitch, create, execute — no second-guessing\n✦ Today you can carry others without depleting yourself\n✦ Set one audacious goal and actually do it';
+  } else if(score>=65){
+    orbLabel='⚡ WARRIOR STATE';orbSub='Strong baseline. You have the fuel — use it with precision.';
+    warnings=`<div class="mindset-clear"><div class="mindset-title" style="color:#00e5c8;">✦ Clear to Grind</div><div class="mindset-text">You have enough in the tank for meaningful output. Prioritize one main mission today and protect your energy around it. You're building resilience, not spending it. 🩷</div></div>`;
+    protocol='✦ One main creative or productive mission\n✦ Morning movement required — activate the body\n✦ Protect your afternoon — don\'t scatter your focus\n✦ Evening wind-down is non-negotiable';
+  } else if(score>=50){
+    orbLabel='🌱 SURVIVOR RISING';orbSub='You\'re functional but fragile. Move carefully. Don\'t perform.';
+    warnings=`<div class="mindset-warning"><div class="mindset-title" style="color:#ff6b35;">⚠️ Moderate Alert</div><div class="mindset-text">Your system is running below baseline. This is NOT a hustle day. Forcing output from a depleted state is how Crustina wins. Do the minimum required. Rest is productive. Protect the recovery. 🌸</div></div>`;
+    protocol='✦ Gentle yoga — mandatory, not optional\n✦ No big decisions today\n✦ Eat properly — your body is working to recover\n✦ Creative rest counts: music, art, stillness\n✦ Limit screens after 8pm';
+  } else {
+    orbLabel='🥀 RECOVERY PROTOCOL';orbSub='Your body is calling a ceasefire. Honor it.';
+    warnings=`<div class="mindset-warning"><div class="mindset-title" style="color:#ff2d78;">🚨 Truffle Trail Danger Zone</div><div class="mindset-text">Low resilience = high susceptibility to Truffle Trail spirals, Crustina takeovers, and parasocial dopamine traps. Harry Styles doesn't pay your rent — your nervous system does. Close the tabs. Do the yoga. Get horizontal. 🗡️</div></div><div class="mindset-warning" style="margin-top:0;"><div class="mindset-title" style="color:#ff2d78;">⚠️ High Risk Window</div><div class="mindset-text">Do not make decisions, reply to triggering messages, or doom-scroll. This is a biological state, not a character flaw. Meditate. Hydrate. Electrolytes. Bed by 9. 🌙</div></div>`;
+    protocol='✦ Yoga — non-negotiable, even 10 minutes\n✦ Meditation — minimum 5 minutes\n✦ Zero social media today\n✦ Harry Styles doesn\'t pay your rent 💸\n✦ Bed by 9pm — no exceptions\n✦ Electrolytes + warm food\n✦ No big conversations — postpone everything';
+  }
+
+  document.getElementById('orb-label').textContent=orbLabel;
+  document.getElementById('orb-sub').textContent=orbSub;
+  document.getElementById('mindset-warnings').innerHTML=warnings;
+  document.getElementById('mindset-protocol').innerHTML=protocol.split('\n').map(l=>`<div style="padding:4px 0;border-bottom:1px solid #1e1830;">${l}</div>`).join('');
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────────
+const TIER_SCALE=['#1e1830','#4a1030','#8b1a5a','#c4267a','#e91e8c','#ff6eb4'];
+const TIER_NAMES=['Victim','Survivor','Warrior','Boar Slayer','Resilience Demon','The Reckoner'];
+
+function buildHeatmap(){
+  const data=Array.from({length:91},()=>Math.floor(Math.random()*6));
+  const grid=document.getElementById('heatmap-grid');grid.innerHTML='';
+  const tooltip=document.getElementById('heatmap-tooltip');
+
+  for(let r=0;r<7;r++){
+    const row=document.createElement('div');row.className='heatmap-row';
+    for(let c=0;c<13;c++){
+      const idx=r*13+c;const v=data[idx];
+      const cell=document.createElement('div');cell.className='heatmap-cell';
+      cell.style.background=TIER_SCALE[v];
+      if(v>=4)cell.style.boxShadow='0 0 6px #ff6eb488';
+      cell.addEventListener('click',e=>{
+        tooltip.textContent=`${TIER_NAMES[v]} ✦`;
+        tooltip.style.left=Math.min(e.clientX-40,window.innerWidth-140)+'px';
+        tooltip.style.top=(e.clientY-50)+'px';
+        tooltip.style.opacity='1';
+        clearTimeout(cell._tt);
+        cell._tt=setTimeout(()=>tooltip.style.opacity='0',2000);
+      });
       row.appendChild(cell);
     }
     grid.appendChild(row);
   }
 }
 
-function switchTab(tab, btn, fromNav) {
+// ── UI ────────────────────────────────────────────────────────────────────────
+function setQuotes(){
+  const q=()=>`"${QUOTES[Math.floor(Math.random()*QUOTES.length)]}"`;
+  ['narc-1','narc-2','narc-3','narc-4'].forEach(id=>document.getElementById(id).textContent=q());
+}
+
+function switchTab(tab,btn,fromNav){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
-  if (!fromNav) { document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); if(btn)btn.classList.add('active'); }
-  ['today','trends','sleep'].forEach(t => {
-    document.getElementById(`nav-${t}`).style.color = t===tab ? '#ff6eb4' : '#7a6a99';
+  if(!fromNav){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');}
+  ['today','trends','sleep','mindset'].forEach(t=>{
+    const el=document.getElementById(`nav-${t}`);
+    if(el)el.style.color=t===tab?'#ff6eb4':'#7a6a99';
   });
+}
+
+function renderDemo(){
+  document.getElementById('m-hrv').textContent='~43';
+  document.getElementById('m-spo2').textContent='97';
+  document.getElementById('m-bpm').textContent='57';
+  document.getElementById('m-sleep').textContent='6.8';
+  APP.score=73;APP.deepMins=68;
+  renderScore(73);
+  document.getElementById('steps-num').textContent='3,820';
+  document.getElementById('steps-bar').style.width='76%';
+  document.getElementById('steps-rem').textContent='1,180 to boost 🔥';
+  document.getElementById('sleep-dur').textContent='6h 28m';
+  document.getElementById('sleep-times').textContent='1:38 am – 7:13 am';
+  drawRing('sleep-ring',62,90);
+  renderPredatorBadge(68);
+  renderCharts([],[]);
+  renderSleep();
+  renderMindset(73);
 }
 
 init();
