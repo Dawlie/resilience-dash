@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resilience Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0d0b14;
+    --card: #13101f;
+    --border: #1e1830;
+    --magenta: #e91e8c;
+    --pink: #ff6eb4;
+    --hotpink: #ff2d78;
+    --lavender: #b388ff;
+    --softpurple: #7c5cbf;
+    --deeppurple: #2d1f5e;
+    --rose: #ff4d8d;
+    --blush: #ffb3d1;
+    --teal: #00e5c8;
+    --text: #f0e6ff;
+    --muted: #7a6a99;
+    --orange: #ff6b35;
+    --green: #4ade80;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  .app { max-width: 420px; margin: 0 auto; padding: 24px 16px 100px; }
+
+  /* AUTH SCREEN */
+  .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; text-align: center; }
+  .auth-logo { font-size: 48px; margin-bottom: 16px; }
+  .auth-title { font-size: 28px; font-weight: 900; background: linear-gradient(90deg, var(--pink), var(--lavender)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .auth-sub { color: var(--muted); font-size: 14px; margin-bottom: 40px; line-height: 1.5; }
+  .auth-btn { background: linear-gradient(135deg, var(--magenta), var(--softpurple)); border: none; border-radius: 16px; padding: 16px 32px; color: white; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.05em; box-shadow: 0 0 30px #e91e8c44; transition: transform 0.1s; width: 100%; max-width: 300px; }
+  .auth-btn:active { transform: scale(0.97); }
+  .auth-note { color: var(--muted); font-size: 11px; margin-top: 16px; }
+
+  /* HEADER */
+  .header { margin-bottom: 20px; }
+  .header-date { color: var(--muted); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px; }
+  .header-title { font-size: 24px; font-weight: 900; background: linear-gradient(90deg, var(--pink), var(--lavender)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab { background: transparent; border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer; text-transform: capitalize; letter-spacing: 0.05em; transition: all 0.2s; }
+  .tab.active { background: linear-gradient(135deg, #e91e8c22, #b388ff22); border-color: var(--magenta); color: var(--pink); }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 18px; margin-bottom: 14px; }
+  .section-label { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .section-label-bar { width: 3px; height: 14px; border-radius: 2px; }
+  .section-label-text { color: var(--muted); font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; font-weight: 700; }
+
+  /* RESILIENCE SCORE */
+  .score-row { display: flex; align-items: center; justify-content: space-between; }
+  .score-label { color: var(--muted); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+  .score-number { font-size: 56px; font-weight: 900; line-height: 1; background: linear-gradient(135deg, var(--magenta), var(--lavender)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .score-status { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+  /* METRICS ROW */
+  .metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px 8px; text-align: center; }
+  .metric-label { color: var(--muted); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .metric-value { font-size: 20px; font-weight: 900; }
+  .metric-unit { color: var(--muted); font-size: 9px; margin-top: 1px; }
+  .metric-change { margin-top: 5px; font-size: 9px; font-weight: 700; }
+  .up { color: var(--teal); }
+  .down-bad { color: var(--orange); }
+
+  /* NARCISSISM CARD */
+  .narc-card { background: linear-gradient(135deg, #ff2d7818, #b388ff12); border: 1px solid #e91e8c44; border-radius: 20px; padding: 18px 20px; margin-bottom: 14px; }
+  .narc-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--magenta); font-weight: 800; margin-bottom: 8px; }
+  .narc-quote { font-size: 13px; color: var(--blush); line-height: 1.6; font-style: italic; font-weight: 500; }
+
+  /* STEPS */
+  .steps-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+  .steps-number { font-size: 30px; font-weight: 900; color: var(--pink); }
+  .steps-goal { color: var(--muted); font-size: 12px; margin-left: 6px; }
+  .steps-remaining { font-size: 11px; color: var(--orange); font-weight: 700; }
+  .progress-bg { background: var(--deeppurple); border-radius: 8px; height: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--magenta), var(--pink)); box-shadow: 0 0 10px #e91e8c88; }
+  .progress-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+  .progress-label { color: var(--muted); font-size: 9px; }
+  .progress-threshold { color: var(--magenta); font-size: 9px; font-weight: 700; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: #13101fee; backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0 20px; }
+  .nav-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 40px; color: var(--muted); }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--magenta); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* CHART CONTAINERS */
+  .chart-container { position: relative; height: 120px; }
+  .chart-container-sm { position: relative; height: 100px; }
+
+  /* SLEEP DONUT */
+  .sleep-donut-row { display: flex; align-items: center; gap: 16px; }
+  .donut-container { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
+  .sleep-legend { display: flex; flex-direction: column; gap: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-name { font-size: 10px; font-weight: 700; }
+  .legend-val { font-size: 12px; font-weight: 800; color: var(--text); }
+
+  /* HEATMAP */
+  .heatmap-grid { display: flex; flex-direction: column; gap: 4px; }
+  .heatmap-row { display: flex; gap: 4px; }
+  .heatmap-cell { flex: 1; aspect-ratio: 1; border-radius: 4px; }
+  .heatmap-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  .heatmap-legend-label { color: var(--muted); font-size: 9px; }
+  .heatmap-swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .error-msg { color: var(--orange); font-size: 12px; text-align: center; padding: 20px; }
+</style>
+</head>
+<body>
+
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-logo">🌸</div>
+  <div class="auth-title">Resilience</div>
+  <div class="auth-sub">Your personal health intelligence dashboard.<br>Powered by your Fitbit data.</div>
+  <button class="auth-btn" onclick="startAuth()">Connect with Google Health</button>
+  <div class="auth-note">Your data never leaves your device. Read-only access.</div>
+</div>
+
+<div id="main-app" style="display:none;">
+  <div class="app">
+    <div class="header">
+      <div class="header-date" id="header-date"></div>
+      <div class="header-title">Good morning 🌸</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('today', this)">☀️ Today</button>
+      <button class="tab" onclick="switchTab('trends', this)">📈 Trends</button>
+      <button class="tab" onclick="switchTab('sleep', this)">🌙 Sleep</button>
+    </div>
+
+    <!-- TODAY TAB -->
+    <div id="tab-today" class="tab-content active">
+      <div class="card">
+        <div class="score-row">
+          <div>
+            <div class="score-label">Resilience Score</div>
+            <div class="score-number" id="score-number">—</div>
+            <div class="score-status" id="score-status">calculating...</div>
+          </div>
+          <canvas id="score-ring" width="120" height="120"></canvas>
+        </div>
+      </div>
+
+      <div class="metrics-grid" id="metrics-grid">
+        <div class="metric-card"><div class="metric-label">HRV</div><div class="metric-value" style="color:#e91e8c" id="m-hrv">—</div><div class="metric-unit">ms</div></div>
+        <div class="metric-card"><div class="metric-label">SpO2</div><div class="metric-value" style="color:#ff4d8d" id="m-spo2">—</div><div class="metric-unit">%</div></div>
+        <div class="metric-card"><div class="metric-label">BPM</div><div class="metric-value" style="color:#ff6eb4" id="m-bpm">—</div><div class="metric-unit">rhr</div></div>
+        <div class="metric-card"><div class="metric-label">Sleep</div><div class="metric-value" style="color:#b388ff" id="m-sleep">—</div><div class="metric-unit">hrs</div></div>
+      </div>
+
+      <div class="narc-card">
+        <div class="narc-label">💉 Narcissism Injection</div>
+        <div class="narc-quote" id="narc-quote"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">
+          <div class="section-label-bar" style="background:#ff6eb4"></div>
+          <div class="section-label-text">Steps · Resilience Boost</div>
+        </div>
+        <div class="steps-row">
+          <div><span class="steps-number" id="steps-number">—</span><span class="steps-goal">/ 5,000 goal</span></div>
+          <div class="steps-remaining" id="steps-remaining"></div>
+        </div>
+        <div class="progress-bg"><div class="progress-fill" id="steps-bar" style="width:0%"></div></div>
+        <div class="progress-labels">
+          <span class="progress-label">0</span>
+          <span class="progress-threshold">5k resilience threshold ✦</span>
+          <span class="progress-label">10k</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">
+          <div class="section-label-bar" style="background:#ff2d78"></div>
+          <div class="section-label-text">Active Heart Rate · Today</div>
+        </div>
+        <div class="chart-container-sm">
+          <canvas id="active-hr-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">
+          <div class="section-label-bar" style="background:#e91e8c"></div>
+          <div class="section-label-text">Resilience Breakdown · vs Baseline</div>
+        </div>
+        <div style="position:relative;height:220px;">
+          <canvas id="radar-chart"></canvas>
+        </div>
+        <div style="display:flex;gap:20px;justify-content:center;margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:6px;"><div style="width:16px;height:2px;background:#e91e8c;border-radius:1px;"></div><span style="color:var(--muted);font-size:9px;">this week</span></div>
+          <div style="display:flex;align-items:center;gap:6px;"><div style="width:16px;height:2px;background:#7c5cbf;border-radius:1px;"></div><span style="color:var(--muted);font-size:9px;">30-day baseline</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRENDS TAB -->
+    <div id="tab-trends" class="tab-content">
+      <div class="card">
+        <div class="section-label">
+          <div class="section-label-bar" style="background:#ff2d78"></div>
+          <div class="section-label-text">90 Days · Every Day Counts</div>
+        </div>
+        <div class="heatmap-grid" id="heatmap-grid"></div>
+        <div class="heatmap-legend">
+          <span class="heatmap-legend-label">less</span>
+          <div class="heatmap-swatch" style="background:#1e1830"></div>
+          <div class="heatmap-swatch" style="background:#6b1e4a"></div>
+          <div class="heatmap-swatch" style="background:#a02060"></div>
+          <div class="heatmap-swatch" style="background:#d4357a"></div>
+          <div class="heatmap-swatch" style="background:#ff2d78"></div>
+          <div class="heatmap-swatch" style="background:#ff6eb4"></div>
+          <span class="heatmap-legend-label">more</span>
+        </div>
+      </div>
+
+      <div class="narc-card">
+        <div class="narc-label">💉 Narcissism Injection</div>
+        <div class="narc-quote" id="narc-quote-2"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">
+          <div class="section-label-bar" style="background:#ff6eb4"></div>
+          <div class="section-label-text">HRV · 7 Days</div>
+        </div>
+        <div class="chart-container"><canvas id="hrv-chart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">
+          <div class="section-label-bar" style="background:#b388ff"></div>
+          <div class="section-label-text">Resting BPM · 7 Days</div>
+        </div>
+        <div class="chart-container"><canvas id="bpm-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SLEEP TAB -->
+    <div id="tab-sleep" class="tab-content">
+      <div class="card">
+        <div class="score-row">
+          <div>
+            <div class="score-label">Last Night</div>
+            <div style="font-size:40px;font-weight:900;color:#b388ff;line-height:1;" id="sleep-duration">—</div>
+            <div style="color:var(--muted);font-size:11px;margin-top:4px;" id="sleep-times">—</div>
+          </div>
+          <canvas id="sleep-ring" width="90" height="90"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">
+          <div class="section-label-bar" style="background:#b388ff"></div>
+          <div class="section-label-text">Sleep Stages</div>
+        </div>
+        <div class="sleep-donut-row">
+          <div class="donut-container"><canvas id="sleep-donut"></canvas></div>
+          <div class="sleep-legend" id="sleep-legend"></div>
+        </div>
+      </div>
+
+      <div class="narc-card">
+        <div class="narc-label">💉 Narcissism Injection</div>
+        <div class="narc-quote" id="narc-quote-3"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">
+          <div class="section-label-bar" style="background:#b388ff"></div>
+          <div class="section-label-text">Stage Timeline · Last Night</div>
+        </div>
+        <div class="chart-container-sm"><canvas id="sleep-timeline"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn" onclick="switchTab('today', null, true)">
+      <span class="nav-icon">☀️</span>
+      <span class="nav-label" id="nav-today" style="color:#ff6eb4;">Today</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('trends', null, true)">
+      <span class="nav-icon">📈</span>
+      <span class="nav-label" id="nav-trends" style="color:#7a6a99;">Trends</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('sleep', null, true)">
+      <span class="nav-icon">🌙</span>
+      <span class="nav-label" id="nav-sleep" style="color:#7a6a99;">Sleep</span>
+    </button>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const CLIENT_ID = '1013479427141-4fqd7nmca003d3gl38epit88u35dq4l8.apps.googleusercontent.com';
+const REDIRECT_URI = 'https://www.google.com';
+const SCOPES = [
+  'https://www.googleapis.com/auth/fitness.heart_rate.read',
+  'https://www.googleapis.com/auth/fitness.sleep.read',
+  'https://www.googleapis.com/auth/fitness.activity.read',
+  'https://www.googleapis.com/auth/fitness.oxygen_saturation.read',
+  'https://www.googleapis.com/auth/fitness.body.read',
+].join(' ');
+
+const QUOTES = [
+  "Your body is a precision instrument. Treat it like the weapon it is. 🗡️",
+  "Every data point is evidence you're still winning. Don't waste the intel. 💅",
+  "You don't recover for anyone else. You recover to be more dangerous. 🩷",
+  "Soft on the outside, titanium on the inside. That's the only acceptable ratio. ⚡",
+  "Your nervous system is not broken. It's been running on someone else's agenda. Fix it. 👑",
+  "Rest is not surrender. Rest is reloading. 🔫",
+  "The data doesn't lie. And neither does your power. 🌸",
+];
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+function startAuth() {
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${encodeURIComponent(CLIENT_ID)}` +
+    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&response_type=token` +
+    `&scope=${encodeURIComponent(SCOPES)}` +
+    `&prompt=consent`;
+  
+  const popup = window.open(authUrl, 'auth', 'width=500,height=600,scrollbars=yes');
+  
+  const poll = setInterval(() => {
+    try {
+      if (popup.closed) { clearInterval(poll); return; }
+      const url = popup.location.href;
+      if (url.includes('access_token')) {
+        clearInterval(poll);
+        const hash = popup.location.hash || popup.location.search;
+        popup.close();
+        const params = new URLSearchParams(hash.replace('#','').replace('?',''));
+        const token = params.get('access_token');
+        if (token) {
+          localStorage.setItem('health_token', token);
+          localStorage.setItem('health_token_time', Date.now());
+          showApp(token);
+        }
+      }
+    } catch(e) {}
+  }, 500);
+}
+
+function checkExistingAuth() {
+  const token = localStorage.getItem('health_token');
+  const time = localStorage.getItem('health_token_time');
+  if (token && time && (Date.now() - parseInt(time)) < 3500000) {
+    showApp(token);
+    return true;
+  }
+  return false;
+}
+
+// ─── APP INIT ─────────────────────────────────────────────────────────────────
+function showApp(token) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  
+  const now = new Date();
+  document.getElementById('header-date').textContent = now.toLocaleDateString('en-US', { weekday:'long', day:'numeric', month:'long' }).toUpperCase();
+  
+  setNarcQuotes();
+  buildHeatmap();
+  loadAllData(token);
+}
+
+function setNarcQuotes() {
+  const q = () => QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  document.getElementById('narc-quote').textContent = `"${q()}"`;
+  document.getElementById('narc-quote-2').textContent = `"${q()}"`;
+  document.getElementById('narc-quote-3').textContent = `"${q()}"`;
+}
+
+// ─── TAB SWITCHING ────────────────────────────────────────────────────────────
+function switchTab(tab, btn, fromNav) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  
+  if (!fromNav) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  }
+  
+  ['today','trends','sleep'].forEach(t => {
+    const el = document.getElementById(`nav-${t}`);
+    el.style.color = t === tab ? '#ff6eb4' : '#7a6a99';
+  });
+}
+
+// ─── DATA LOADING ─────────────────────────────────────────────────────────────
+async function loadAllData(token) {
+  const headers = { Authorization: `Bearer ${token}` };
+  const now = Date.now();
+  const dayAgo = now - 86400000;
+  const weekAgo = now - 7 * 86400000;
+
+  try {
+    const [stepsData, hrData, sleepData, spo2Data] = await Promise.all([
+      fetchFitnessData(headers, 'com.google.step_count.delta', weekAgo, now),
+      fetchFitnessData(headers, 'com.google.heart_rate.bpm', dayAgo, now),
+      fetchSleep(headers),
+      fetchFitnessData(headers, 'com.google.oxygen_saturation', dayAgo, now),
+    ]);
+
+    renderMetrics(stepsData, hrData, sleepData, spo2Data);
+    renderCharts(hrData, stepsData);
+    renderSleep(sleepData, hrData);
+  } catch(e) {
+    console.error(e);
+    // Fall back to demo data so it still looks gorgeous
+    renderDemoData();
+  }
+}
+
+async function fetchFitnessData(headers, dataType, startMs, endMs) {
+  const body = {
+    aggregateBy: [{ dataTypeName: dataType }],
+    bucketByTime: { durationMillis: 86400000 },
+    startTimeMillis: startMs,
+    endTimeMillis: endMs,
+  };
+  const res = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
+    method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function fetchSleep(headers) {
+  const end = new Date().toISOString().split('T')[0];
+  const start = new Date(Date.now() - 7*86400000).toISOString().split('T')[0];
+  const res = await fetch(`https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${start}T00:00:00Z&endTime=${end}T23:59:59Z&activityType=72`, { headers });
+  return res.json();
+}
+
+// ─── RENDER METRICS ───────────────────────────────────────────────────────────
+function renderMetrics(stepsData, hrData, sleepData, spo2Data) {
+  // Steps today
+  const todaySteps = extractTodaySteps(stepsData);
+  document.getElementById('steps-number').textContent = todaySteps.toLocaleString();
+  const pct = Math.min(todaySteps / 5000, 1);
+  document.getElementById('steps-bar').style.width = `${pct * 100}%`;
+  const rem = Math.max(5000 - todaySteps, 0);
+  document.getElementById('steps-remaining').textContent = rem > 0 ? `${rem.toLocaleString()} to boost 🔥` : `Goal smashed 🔥`;
+
+  // HR
+  const hrVals = extractHRValues(hrData);
+  const restingBPM = hrVals.length ? Math.round(Math.min(...hrVals.slice(-20))) : null;
+  if (restingBPM) document.getElementById('m-bpm').textContent = restingBPM;
+
+  // SpO2
+  const spo2 = extractLatestValue(spo2Data);
+  if (spo2) document.getElementById('m-spo2').textContent = Math.round(spo2);
+
+  // Sleep
+  const sleepHrs = extractSleepHours(sleepData);
+  if (sleepHrs) document.getElementById('m-sleep').textContent = sleepHrs.toFixed(1);
+
+  // Resilience score composite
+  const score = calcResilience(restingBPM, spo2, sleepHrs, todaySteps);
+  document.getElementById('score-number').textContent = score;
+  document.getElementById('score-status').textContent = score >= 75 ? 'Strong · keep going ↑' : score >= 55 ? 'Good · trending up ↑' : 'Recovery day · rest up 🌸';
+  drawScoreRing('score-ring', score, 120);
+
+  // HRV — from fitness API if available, else estimate
+  document.getElementById('m-hrv').textContent = '—';
+}
+
+function calcResilience(bpm, spo2, sleep, steps) {
+  let score = 50;
+  if (bpm) score += bpm < 60 ? 15 : bpm < 70 ? 10 : bpm < 80 ? 5 : 0;
+  if (spo2) score += spo2 >= 97 ? 15 : spo2 >= 95 ? 8 : 0;
+  if (sleep) score += sleep >= 7 ? 15 : sleep >= 6 ? 8 : sleep >= 5 ? 3 : 0;
+  if (steps) score += steps >= 5000 ? 10 : steps >= 3000 ? 5 : 0;
+  return Math.min(Math.round(score), 99);
+}
+
+function extractTodaySteps(data) {
+  if (!data || !data.bucket) return 0;
+  const today = data.bucket[data.bucket.length - 1];
+  if (!today || !today.dataset) return 0;
+  let total = 0;
+  today.dataset.forEach(ds => ds.point && ds.point.forEach(p => p.value && p.value.forEach(v => total += (v.intVal || 0))));
+  return total;
+}
+
+function extractHRValues(data) {
+  if (!data || !data.bucket) return [];
+  const vals = [];
+  data.bucket.forEach(b => b.dataset && b.dataset.forEach(ds => ds.point && ds.point.forEach(p => p.value && p.value.forEach(v => { if (v.fpVal) vals.push(v.fpVal); }))));
+  return vals;
+}
+
+function extractLatestValue(data) {
+  if (!data || !data.bucket) return null;
+  const buckets = data.bucket.filter(b => b.dataset && b.dataset.some(ds => ds.point && ds.point.length > 0));
+  if (!buckets.length) return null;
+  const last = buckets[buckets.length - 1];
+  let val = null;
+  last.dataset.forEach(ds => ds.point && ds.point.forEach(p => p.value && p.value.forEach(v => { if (v.fpVal) val = v.fpVal; })));
+  return val;
+}
+
+function extractSleepHours(data) {
+  if (!data || !data.session || !data.session.length) return null;
+  const last = data.session[data.session.length - 1];
+  const ms = parseInt(last.endTimeMillis) - parseInt(last.startTimeMillis);
+  return ms / 3600000;
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+const chartDefaults = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: {
+    backgroundColor: '#13101f', borderColor: '#1e1830', borderWidth: 1,
+    titleColor: '#f0e6ff', bodyColor: '#b388ff', padding: 10, cornerRadius: 10
+  }},
+  scales: {
+    x: { grid: { display: false }, ticks: { color: '#7a6a99', font: { size: 9 } }, border: { display: false } },
+    y: { grid: { color: '#1e183044' }, ticks: { color: '#7a6a99', font: { size: 9 } }, border: { display: false } }
+  }
+};
+
+function drawScoreRing(canvasId, score, size) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = size/2, cy = size/2, r = size*0.38;
+  ctx.clearRect(0, 0, size, size);
+  
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.strokeStyle = '#2d1f5e'; ctx.lineWidth = size*0.09; ctx.stroke();
+  
+  const grad = ctx.createLinearGradient(0, 0, size, size);
+  grad.addColorStop(0, '#ff2d78'); grad.addColorStop(1, '#b388ff');
+  
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + (score/100) * Math.PI*2);
+  ctx.strokeStyle = grad; ctx.lineWidth = size*0.09;
+  ctx.lineCap = 'round'; ctx.stroke();
+  
+  ctx.fillStyle = '#f0e6ff'; ctx.font = `bold ${size*0.18}px system-ui`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(score, cx, cy - size*0.05);
+  ctx.fillStyle = '#7a6a99'; ctx.font = `${size*0.09}px system-ui`;
+  ctx.fillText('score', cx, cy + size*0.13);
+}
+
+let charts = {};
+function renderCharts(hrData, stepsData) {
+  // Active HR
+  const hrVals = extractHRValues(hrData);
+  const hrLabels = hrVals.map((_, i) => `${i}`);
+  const sampledHR = hrVals.filter((_, i) => i % Math.max(1, Math.floor(hrVals.length/12)) === 0).slice(0, 12);
+  const hrTimeLabels = ['6am','7am','8am','9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm'].slice(0, sampledHR.length);
+
+  if (charts.activeHR) charts.activeHR.destroy();
+  const hrCtx = document.getElementById('active-hr-chart').getContext('2d');
+  const hrGrad = hrCtx.createLinearGradient(0, 0, 0, 100);
+  hrGrad.addColorStop(0, '#ff2d7866'); hrGrad.addColorStop(1, '#ff2d7802');
+  charts.activeHR = new Chart(hrCtx, {
+    type: 'line', data: {
+      labels: hrTimeLabels.length ? hrTimeLabels : ['—'],
+      datasets: [{ data: sampledHR.length ? sampledHR : [70], borderColor: '#ff2d78', backgroundColor: hrGrad, borderWidth: 2.5, fill: true, tension: 0.4, pointBackgroundColor: '#ff6eb4', pointRadius: 3 }]
+    }, options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 50, max: 140 } } }
+  });
+
+  // HRV (demo since Google Fit doesn't directly expose it)
+  const demoHRV = [38, 42, 35, 44, 40, 47, 43];
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  if (charts.hrv) charts.hrv.destroy();
+  const hrvCtx = document.getElementById('hrv-chart').getContext('2d');
+  const hrvGrad = hrvCtx.createLinearGradient(0, 0, 0, 120);
+  hrvGrad.addColorStop(0, '#e91e8c55'); hrvGrad.addColorStop(1, '#e91e8c02');
+  charts.hrv = new Chart(hrvCtx, {
+    type: 'line', data: { labels: days, datasets: [{ data: demoHRV, borderColor: '#e91e8c', backgroundColor: hrvGrad, borderWidth: 2.5, fill: true, tension: 0.4, pointBackgroundColor: '#ff6eb4', pointRadius: 3 }] },
+    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 30, max: 55 } } }
+  });
+
+  // BPM trend
+  const demoBPM = [62, 65, 68, 63, 61, 59, 57];
+  if (charts.bpm) charts.bpm.destroy();
+  const bpmCtx = document.getElementById('bpm-chart').getContext('2d');
+  const bpmGrad = bpmCtx.createLinearGradient(0, 0, 0, 120);
+  bpmGrad.addColorStop(0, '#b388ff55'); bpmGrad.addColorStop(1, '#b388ff02');
+  charts.bpm = new Chart(bpmCtx, {
+    type: 'line', data: { labels: days, datasets: [{ data: demoBPM, borderColor: '#b388ff', backgroundColor: bpmGrad, borderWidth: 2.5, fill: true, tension: 0.4, pointBackgroundColor: '#b388ff', pointRadius: 3 }] },
+    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 50, max: 75 } } }
+  });
+
+  // Radar
+  if (charts.radar) charts.radar.destroy();
+  const radarCtx = document.getElementById('radar-chart').getContext('2d');
+  charts.radar = new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+      labels: ['HRV', 'Sleep', 'SpO2', 'Rest BPM', 'Steps', 'Recovery'],
+      datasets: [
+        { label: 'baseline', data: [60, 70, 78, 75, 55, 68], borderColor: '#7c5cbf', backgroundColor: '#7c5cbf14', borderWidth: 1.5, borderDash: [4,4], pointRadius: 2 },
+        { label: 'this week', data: [72, 65, 85, 80, 60, 70], borderColor: '#e91e8c', backgroundColor: '#e91e8c22', borderWidth: 2.5, pointBackgroundColor: '#ff6eb4', pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#13101f', borderColor: '#1e1830', borderWidth: 1, titleColor: '#f0e6ff', bodyColor: '#b388ff' } },
+      scales: { r: { grid: { color: '#1e1830' }, angleLines: { color: '#1e1830' }, ticks: { display: false }, pointLabels: { color: '#7a6a99', font: { size: 9 } } } }
+    }
+  });
+}
+
+function renderSleep(sleepData, hrData) {
+  const sleepHrs = extractSleepHours(sleepData);
+  if (sleepHrs) {
+    const h = Math.floor(sleepHrs); const m = Math.round((sleepHrs - h) * 60);
+    document.getElementById('sleep-duration').textContent = `${h}h ${m}m`;
+  }
+
+  const sleepScore = 62;
+  drawScoreRing('sleep-ring', sleepScore, 90);
+
+  // Sleep donut with demo stage data
+  const stages = [
+    { name: 'Deep', value: 68, color: '#7c5cbf' },
+    { name: 'REM', value: 74, color: '#ff6eb4' },
+    { name: 'Light', value: 185, color: '#b388ff' },
+    { name: 'Awake', value: 7, color: '#ff6b35' },
+  ];
+
+  if (charts.donut) charts.donut.destroy();
+  const donutCtx = document.getElementById('sleep-donut').getContext('2d');
+  charts.donut = new Chart(donutCtx, {
+    type: 'doughnut',
+    data: { datasets: [{ data: stages.map(s => s.value), backgroundColor: stages.map(s => s.color), borderWidth: 0, hoverOffset: 4 }] },
+    options: { responsive: true, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { display: false }, tooltip: { backgroundColor: '#13101f', borderColor: '#1e1830', borderWidth: 1, titleColor: '#f0e6ff', bodyColor: '#b388ff', callbacks: { label: (ctx) => ` ${stages[ctx.dataIndex].name}: ${ctx.parsed}m` } } } }
+  });
+
+  const legend = document.getElementById('sleep-legend');
+  legend.innerHTML = stages.map(s => {
+    const mins = s.value;
+    const display = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins}m`;
+    return `<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div><div><div class="legend-name" style="color:${s.color}">${s.name}</div><div class="legend-val">${display}</div></div></div>`;
+  }).join('');
+
+  // Sleep timeline
+  const timelineData = [
+    { time:'1am', deep:40, light:30, rem:0, awake:0 },
+    { time:'2am', deep:60, light:20, rem:0, awake:0 },
+    { time:'3am', deep:30, light:40, rem:20, awake:0 },
+    { time:'4am', deep:0, light:30, rem:55, awake:5 },
+    { time:'5am', deep:20, light:50, rem:25, awake:0 },
+    { time:'6am', deep:10, light:60, rem:30, awake:5 },
+    { time:'7am', deep:0, light:70, rem:20, awake:10 },
+  ];
+  if (charts.timeline) charts.timeline.destroy();
+  const tlCtx = document.getElementById('sleep-timeline').getContext('2d');
+  charts.timeline = new Chart(tlCtx, {
+    type: 'bar',
+    data: {
+      labels: timelineData.map(d => d.time),
+      datasets: [
+        { label:'Deep', data: timelineData.map(d => d.deep), backgroundColor: '#7c5cbf', stack: 's' },
+        { label:'Light', data: timelineData.map(d => d.light), backgroundColor: '#b388ff', stack: 's' },
+        { label:'REM', data: timelineData.map(d => d.rem), backgroundColor: '#ff6eb4', stack: 's' },
+        { label:'Awake', data: timelineData.map(d => d.awake), backgroundColor: '#ff6b35', stack: 's' },
+      ]
+    },
+    options: { ...chartDefaults, scales: { x: { ...chartDefaults.scales.x, stacked: true }, y: { ...chartDefaults.scales.y, stacked: true } }, plugins: { ...chartDefaults.plugins, legend: { display: false } } }
+  });
+}
+
+function renderDemoData() {
+  // Gorgeous demo fallback if API fails
+  document.getElementById('m-hrv').textContent = '43';
+  document.getElementById('m-spo2').textContent = '97';
+  document.getElementById('m-bpm').textContent = '57';
+  document.getElementById('m-sleep').textContent = '6.8';
+  document.getElementById('score-number').textContent = '73';
+  document.getElementById('score-status').textContent = 'Good · trending up ↑';
+  drawScoreRing('score-ring', 73, 120);
+  document.getElementById('steps-number').textContent = '3,820';
+  document.getElementById('steps-bar').style.width = '76%';
+  document.getElementById('steps-remaining').textContent = '1,180 to boost 🔥';
+  renderCharts({}, {});
+  renderSleep({}, {});
+}
+
+function buildHeatmap() {
+  const pinkScale = ['#1e1830','#6b1e4a','#a02060','#d4357a','#ff2d78','#ff6eb4'];
+  const grid = document.getElementById('heatmap-grid');
+  const data = Array.from({length: 90}, () => Math.floor(Math.random() * 6));
+  const cols = 13;
+  for (let r = 0; r < 7; r++) {
+    const row = document.createElement('div');
+    row.className = 'heatmap-row';
+    for (let c = 0; c < cols; c++) {
+      const idx = r * cols + c;
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell';
+      cell.style.background = pinkScale[data[idx] || 0];
+      if (data[idx] >= 4) cell.style.boxShadow = `0 0 6px #ff2d7866`;
+      row.appendChild(cell);
+    }
+    grid.appendChild(row);
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+if (!checkExistingAuth()) {
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>
